@@ -95,37 +95,31 @@ public class KothManager {
             }
         }
 
-        if (playersInside.size() == 1) {
-            Player holder = playersInside.get(0);
+        Player currentHolderPlayer = activeSession.getHolderPlayer();
+        boolean holderStillInside = currentHolderPlayer != null && playersInside.contains(currentHolderPlayer);
 
-            if (activeSession.getCurrentHolder() == null) {
-                activeSession.setCurrentHolder(holder.getUniqueId());
-                Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-entered")
-                        .replace("%player%", holder.getName()));
-            } else if (!activeSession.getCurrentHolder().equals(holder.getUniqueId())) {
-                Player oldHolder = activeSession.getHolderPlayer();
-                if (oldHolder != null) {
-                    Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-left")
-                            .replace("%player%", oldHolder.getName()));
-                }
-                activeSession.setCurrentHolder(holder.getUniqueId());
-                Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-entered")
-                        .replace("%player%", holder.getName()));
-            }
+        if (currentHolderPlayer != null && !holderStillInside) {
+            Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-left")
+                    .replace("%player%", currentHolderPlayer.getName()));
+            activeSession.setCurrentHolder(null);
+        }
 
+        if (activeSession.getCurrentHolder() == null && playersInside.size() == 1) {
+            Player newHolder = playersInside.get(0);
+            activeSession.setCurrentHolder(newHolder.getUniqueId());
+            Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-entered")
+                    .replace("%player%", newHolder.getName()));
+        }
+
+        if (activeSession.getCurrentHolder() != null) {
             activeSession.decrementTime();
 
             if (activeSession.getTimeLeft() <= 0) {
-                endKoth(holder);
-            }
-        } else {
-            if (activeSession.getCurrentHolder() != null) {
-                Player oldHolder = activeSession.getHolderPlayer();
-                if (oldHolder != null) {
-                    Bukkit.broadcastMessage(plugin.getConfigManager().getMessage("player-left")
-                            .replace("%player%", oldHolder.getName()));
+                Player winner = activeSession.getHolderPlayer();
+                if (winner != null) {
+                    endKoth(winner);
                 }
-                activeSession.setCurrentHolder(null);
+                return;
             }
         }
 
